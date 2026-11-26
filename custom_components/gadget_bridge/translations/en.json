@@ -4,18 +4,23 @@
     "step": {
       "user": {
         "title": "Register candidate Bluetooth device",
-        "description": "Device protocol support is not implemented yet. Register a device for later development; no measurements will be collected.",
+        "description": "Enter the address of a device with standard GATT heart rate or battery service.",
         "data": {
           "name": "Device name",
           "address": "BLE MAC address"
         }
+      },
+      "confirm": {
+        "title": "Connect heart rate device",
+        "description": "Connect {name} using standard Bluetooth GATT?"
       }
     },
     "error": {
       "invalid_address": "Enter a valid BLE MAC address."
     },
     "abort": {
-      "already_configured": "This device is already configured."
+      "already_configured": "This device is already configured.",
+      "unsupported_device": "Standard heart rate service not advertised."
     }
   }
 }
