@@ -1,0 +1,8 @@
+HA Gadget Bridge is intended to be distributed under the GNU Affero General Public License, version 3 or later (AGPL-3.0-or-later).
+
+Copyright (c) 2026 HA Gadget Bridge contributors.
+
+The full GNU AGPL version 3 license text is available at:
+https://www.gnu.org/licenses/agpl-3.0.txt
+
+For redistribution, distribute the full license text with releases. Protocol code imported from Gadgetbridge must retain its original copyright and license notices.
