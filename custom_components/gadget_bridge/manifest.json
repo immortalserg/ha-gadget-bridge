@@ -1,0 +1,16 @@
+{
+  "domain": "gadget_bridge",
+  "name": "HA Gadget Bridge",
+  "version": "0.1.0-dev",
+  "documentation": "https://github.com/immortalserg/ha-gadget-bridge",
+  "issue_tracker": "https://github.com/immortalserg/ha-gadget-bridge/issues",
+  "codeowners": [
+    "@immortalserg"
+  ],
+  "config_flow": true,
+  "dependencies": [
+    "bluetooth"
+  ],
+  "iot_class": "local_polling",
+  "integration_type": "device"
+}

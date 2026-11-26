@@ -1,0 +1,21 @@
+{
+  "title": "HA Gadget Bridge",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Register candidate Bluetooth device",
+        "description": "Device protocol support is not implemented yet. Register a device for later development; no measurements will be collected.",
+        "data": {
+          "name": "Device name",
+          "address": "BLE MAC address"
+        }
+      }
+    },
+    "error": {
+      "invalid_address": "Enter a valid BLE MAC address."
+    },
+    "abort": {
+      "already_configured": "This device is already configured."
+    }
+  }
+}
