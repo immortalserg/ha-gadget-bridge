@@ -87,6 +87,9 @@ class GattSession:
                 task.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
 
+    async def prepare_client(self, client):
+        """Optional driver-specific handshake before reading services."""
+
     async def run(self):
         while True:
             client = None
@@ -100,6 +103,7 @@ class GattSession:
                     BleakClient, device, self.address,
                     disconnected_callback=lambda _: self.hass.loop.call_soon_threadsafe(disconnected.set),
                 )
+                await self.prepare_client(client)
                 heart = client.services.get_characteristic(HEART_RATE_MEASUREMENT)
                 battery = client.services.get_characteristic(BATTERY_LEVEL)
                 weight = client.services.get_characteristic(WEIGHT_MEASUREMENT)
