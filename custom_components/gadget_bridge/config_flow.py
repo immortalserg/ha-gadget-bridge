@@ -2,7 +2,8 @@
 
 import voluptuous as vol
 from homeassistant.components.bluetooth import BluetoothServiceInfoBleak
-from .drivers.gatt import HEART_RATE_SERVICE
+from .drivers.gatt import HEART_RATE_SERVICE, BATTERY_SERVICE
+from .drivers.weight import WEIGHT_SCALE_SERVICE
 
 from homeassistant import config_entries
 from homeassistant.const import CONF_ADDRESS, CONF_NAME
@@ -16,7 +17,7 @@ class GadgetBridgeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
     async def async_step_bluetooth(self, discovery_info: BluetoothServiceInfoBleak):
-        if HEART_RATE_SERVICE not in {uuid.lower() for uuid in discovery_info.service_uuids}:
+        if not ({HEART_RATE_SERVICE, BATTERY_SERVICE, WEIGHT_SCALE_SERVICE} & {uuid.lower() for uuid in discovery_info.service_uuids}):
             return self.async_abort(reason="unsupported_device")
         self._discovered = discovery_info
         await self.async_set_unique_id(discovery_info.address.upper())

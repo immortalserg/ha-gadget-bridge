@@ -11,6 +11,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     async_add_entities([
         GadgetSensor(entry, session, "heart_rate", "Heart rate", "bpm", None),
         GadgetSensor(entry, session, "battery", "Battery", PERCENTAGE, SensorDeviceClass.BATTERY),
+        GadgetSensor(entry, session, "weight", "Weight", "kg", SensorDeviceClass.WEIGHT),
     ])
 
 

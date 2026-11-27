@@ -1,7 +1,7 @@
 {
   "domain": "gadget_bridge",
   "name": "HA Gadget Bridge",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "documentation": "https://github.com/immortalserg/ha-gadget-bridge",
   "issue_tracker": "https://github.com/immortalserg/ha-gadget-bridge/issues",
   "codeowners": [
@@ -16,6 +16,14 @@
   "bluetooth": [
     {
       "service_uuid": "0000180d-0000-1000-8000-00805f9b34fb",
+      "connectable": true
+    },
+    {
+      "service_uuid": "0000180f-0000-1000-8000-00805f9b34fb",
+      "connectable": true
+    },
+    {
+      "service_uuid": "0000181d-0000-1000-8000-00805f9b34fb",
       "connectable": true
     }
   ]
