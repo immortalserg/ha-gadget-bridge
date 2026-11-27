@@ -2,6 +2,8 @@
 import asyncio
 import logging
 from contextlib import suppress
+from datetime import datetime, timezone
+from .drivers.base import Capability, Measurement
 
 from bleak import BleakClient
 from bleak_retry_connector import establish_connection
@@ -15,16 +17,39 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class GattSession:
-    def __init__(self, hass, address, entry_id):
+    def __init__(self, hass, address, entry_id, store=None):
         self.hass = hass
         self.address = address
         self.signal = f"gadget_bridge_{entry_id}"
         self.values = {}
         self.connected = False
         self.task = None
+        self.store = store
+        self.entry_id = entry_id
+        self.pending = []
+        self.writer = None
+
+    async def flush_history(self):
+        while self.pending:
+            batch = self.pending[:256]
+            try:
+                await self.hass.async_add_executor_job(self.store.save, self.entry_id, "live", batch)
+            except Exception:
+                _LOGGER.warning("Unable to persist gadget history", exc_info=True)
+                return
+            del self.pending[:len(batch)]
 
     def publish(self, kind, value):
         self.values[kind] = value
+        if self.store is not None:
+            units = {"heart_rate": "bpm", "battery": "%", "weight": "kg"}
+            if kind in units:
+                if len(self.pending) >= 4096:
+                    self.pending.pop(0)
+                    _LOGGER.warning("Gadget history buffer full; oldest sample dropped")
+                self.pending.append(Measurement(Capability(kind), datetime.now(timezone.utc), value, units[kind], self.entry_id))
+                if self.writer is None or self.writer.done():
+                    self.writer = self.hass.async_create_task(self.flush_history())
         async_dispatcher_send(self.hass, self.signal)
 
     def heart_notification(self, sender, data):
@@ -95,3 +120,7 @@ class GattSession:
             with suppress(asyncio.CancelledError):
                 await self.task
             self.task = None
+        if self.writer is not None:
+            await self.writer
+        if self.store is not None:
+            await self.flush_history()
