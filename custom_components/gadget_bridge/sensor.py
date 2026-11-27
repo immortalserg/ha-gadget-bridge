@@ -18,6 +18,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
         steps._attr_state_class = None
         steps._attr_icon = "mdi:walk"
         entities.append(steps)
+    if getattr(session, "supports_charging", False):
+        entities.append(GadgetSensor(entry, session, "last_charge_level", "Last charge level", PERCENTAGE, SensorDeviceClass.BATTERY))
     async_add_entities(entities)
 
 
@@ -40,7 +42,7 @@ class GadgetSensor(SensorEntity):
 
     @property
     def available(self):
-        return self.session.connected and self.kind in self.session.values
+        return self.session.connected and self.session.values.get(self.kind) is not None
 
     @property
     def native_value(self):
