@@ -8,7 +8,7 @@ of compatibility with Gadgetbridge proprietary scale protocols.
   adapter/proxy, and permit GATT indications without vendor-specific login.
 - The Weight entity appears only when the characteristic is present and
   only becomes available once a valid indication arrives.
-- Values are stored in the unit reported by the scale (kg or lb). Additional
+- Weight values are normalized to kilograms for the Home Assistant sensor. Additional
   fields like BMI, user ID and height are parsed but deliberately not published:
   a shared household scale must not silently mix personal measurements.
 - Some scales send an indication only when stepped on and may require bonding.
