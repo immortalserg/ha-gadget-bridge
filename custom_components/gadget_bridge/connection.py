@@ -30,6 +30,8 @@ class GattSession:
         self.entry_id = entry_id
         self.pending = []
         self.writer = None
+        self.reconnect_requested = asyncio.Event()
+        self.refresh_requested = asyncio.Event()
 
     async def flush_history(self):
         while self.pending:
@@ -69,6 +71,22 @@ class GattSession:
         except ValueError:
             _LOGGER.debug("Invalid weight indication")
 
+    async def wait_retry(self):
+        try:
+            await asyncio.wait_for(self.reconnect_requested.wait(), self.reconnect_interval)
+        except TimeoutError:
+            pass
+        self.reconnect_requested.clear()
+
+    async def wait_update(self, disconnected):
+        tasks = [asyncio.create_task(event.wait()) for event in (disconnected, self.reconnect_requested, self.refresh_requested)]
+        try:
+            await asyncio.wait(tasks, timeout=self.poll_interval, return_when=asyncio.FIRST_COMPLETED)
+        finally:
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+
     async def run(self):
         while True:
             client = None
@@ -76,7 +94,7 @@ class GattSession:
             try:
                 device = bluetooth.async_ble_device_from_address(self.hass, self.address, connectable=True)
                 if device is None:
-                    await asyncio.sleep(self.reconnect_interval)
+                    await self.wait_retry()
                     continue
                 client = await establish_connection(
                     BleakClient, device, self.address,
@@ -93,16 +111,14 @@ class GattSession:
                     await client.start_notify(heart, self.heart_notification)
                 if weight is not None:
                     await client.start_notify(weight, self.weight_indication)
-                while client.is_connected and not disconnected.is_set():
+                while client.is_connected and not disconnected.is_set() and not self.reconnect_requested.is_set():
+                    self.refresh_requested.clear()
                     if battery is not None:
                         try:
                             self.publish("battery", decode_battery(bytes(await client.read_gatt_char(battery))))
                         except Exception:
                             _LOGGER.debug("Battery read failed", exc_info=True)
-                    try:
-                        await asyncio.wait_for(disconnected.wait(), timeout=self.poll_interval)
-                    except TimeoutError:
-                        pass
+                    await self.wait_update(disconnected)
             except asyncio.CancelledError:
                 raise
             except Exception:
@@ -114,7 +130,7 @@ class GattSession:
                 if client is not None:
                     with suppress(Exception):
                         await client.disconnect()
-            await asyncio.sleep(self.reconnect_interval)
+            await self.wait_retry()
 
     async def stop(self):
         if self.task is not None:
