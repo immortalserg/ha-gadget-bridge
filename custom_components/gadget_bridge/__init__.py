@@ -2,10 +2,12 @@
 from homeassistant.const import CONF_ADDRESS
 from .const import DOMAIN
 from .connection import GattSession
+from .history import HistoryStore
 
 
 async def async_setup_entry(hass, entry):
-    session = GattSession(hass, entry.data[CONF_ADDRESS], entry.entry_id)
+    store = HistoryStore(hass.config.path("gadget_bridge_history.sqlite3"))
+    session = GattSession(hass, entry.data[CONF_ADDRESS], entry.entry_id, store)
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = session
     await hass.config_entries.async_forward_entry_setups(entry, ("sensor",))
     session.task = entry.async_create_background_task(hass, session.run(), "gadget_bridge_gatt")
