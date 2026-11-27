@@ -15,6 +15,10 @@ class GadgetBridgeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
+    @staticmethod
+    def async_get_options_flow(config_entry):
+        return GadgetBridgeOptionsFlow()
+
     async def async_step_bluetooth(self, discovery_info: BluetoothServiceInfoBleak):
         advertisement = Advertisement(discovery_info.name or "", frozenset(discovery_info.service_uuids))
         if matching_drivers(advertisement, STANDARD_RULES) != ("standard_gatt",):
@@ -56,3 +60,15 @@ class GadgetBridgeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             }),
             errors=errors,
         )
+
+
+class GadgetBridgeOptionsFlow(config_entries.OptionsFlowWithReload):
+    async def async_step_init(self, user_input=None):
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+        options = self.config_entry.options
+        return self.async_show_form(step_id="init", data_schema=vol.Schema({
+            vol.Required("poll_interval", default=options.get("poll_interval", 300)): vol.All(vol.Coerce(int), vol.Range(min=15, max=86400)),
+            vol.Required("reconnect_interval", default=options.get("reconnect_interval", 30)): vol.All(vol.Coerce(int), vol.Range(min=5, max=3600)),
+            vol.Required("record_history", default=options.get("record_history", True)): bool,
+        }))
