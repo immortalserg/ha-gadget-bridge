@@ -1,0 +1,11 @@
+# Device inventory
+
+The catalogue is not a compatibility claim. Import a reviewed JSON array of records with manufacturer, model, family and upstream_id using:
+
+```sh
+python tools/import_catalog.py upstream-export.json --revision UPSTREAM_COMMIT
+```
+
+The importer validates required fields, rejects duplicate upstream identifiers and records provenance. It deliberately assigns catalogued status to every imported model. Actual driver support must be tracked independently.
+
+The initial inventory is empty. Extracting records from Gadgetbridge Java coordinators and checking upstream licensing and model aliases remain necessary. Do not infer a device protocol from a matching name alone.
