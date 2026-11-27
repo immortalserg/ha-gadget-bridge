@@ -15,7 +15,7 @@ A model is **catalogued** when upstream metadata has been mapped. **Recognized**
 
 ## Initial protocol priority
 
-BLE GATT standard services (Heart Rate, Battery, Weight Scale, Blood Pressure), followed by manufacturers represented upstream: Xiaomi, Huami/Amazfit, Huawei/Honor, Garmin, FitPro / Da Fit / GloryFit / FitCloud and remaining device categories.
+BLE GATT standard services (Heart Rate, Battery, Weight Scale decoder and live indications added; hardware testing pending; Blood Pressure next), followed by manufacturers represented upstream: Xiaomi, Huami/Amazfit, Huawei/Honor, Garmin, FitPro / Da Fit / GloryFit / FitCloud and remaining device categories.
 
 ## License and attribution
 
