@@ -7,7 +7,8 @@
         "description": "Enter the address of a device with standard GATT heart rate or battery service.",
         "data": {
           "name": "Device name",
-          "address": "BLE MAC address"
+          "address": "BLE MAC address",
+          "driver_id": "Device driver"
         }
       },
       "confirm": {
@@ -30,7 +31,8 @@
         "data": {
           "poll_interval": "Battery polling interval (s)",
           "reconnect_interval": "Reconnect interval (s)",
-          "record_history": "Record measurement history"
+          "record_history": "Record measurement history",
+          "driver_id": "Device driver"
         }
       }
     }
