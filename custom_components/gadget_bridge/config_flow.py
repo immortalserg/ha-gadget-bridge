@@ -9,6 +9,8 @@ from homeassistant.const import CONF_ADDRESS, CONF_NAME
 
 from .const import DOMAIN
 from .drivers.sessions import SESSION_FACTORIES
+from .drivers.huami_auth import parse_key
+from homeassistant.helpers import selector
 
 
 class GadgetBridgeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -46,12 +48,14 @@ class GadgetBridgeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             import re
             if not re.fullmatch(r"(?:[0-9A-F]{2}:){5}[0-9A-F]{2}", address):
                 errors["base"] = "invalid_address"
+            elif not valid_key(user_input):
+                errors["base"] = "invalid_auth_key"
             else:
                 await self.async_set_unique_id(address)
                 self._abort_if_unique_id_configured()
                 return self.async_create_entry(
                     title=user_input[CONF_NAME].strip(),
-                    data={CONF_ADDRESS: address, CONF_NAME: user_input[CONF_NAME].strip(), "driver_id": user_input["driver_id"]},
+                    data={CONF_ADDRESS: address, CONF_NAME: user_input[CONF_NAME].strip(), "driver_id": user_input["driver_id"], "auth_key": user_input.get("auth_key", "")},
                 )
         return self.async_show_form(
             step_id="user",
@@ -59,6 +63,7 @@ class GadgetBridgeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(CONF_NAME): str,
                 vol.Required(CONF_ADDRESS): str,
                 vol.Required("driver_id", default="standard_gatt"): vol.In(sorted(SESSION_FACTORIES)),
+                vol.Optional("auth_key"): selector.TextSelector(selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)),
             }),
             errors=errors,
         )
@@ -66,12 +71,29 @@ class GadgetBridgeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 class GadgetBridgeOptionsFlow(config_entries.OptionsFlowWithReload):
     async def async_step_init(self, user_input=None):
-        if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
+        errors = {}
         options = self.config_entry.options
+        if user_input is not None:
+            user_input = dict(user_input)
+            if not user_input.get("auth_key"):
+                user_input["auth_key"] = options.get("auth_key", self.config_entry.data.get("auth_key", ""))
+            if valid_key(user_input):
+                return self.async_create_entry(title="", data=user_input)
+            errors["base"] = "invalid_auth_key"
         return self.async_show_form(step_id="init", data_schema=vol.Schema({
             vol.Required("driver_id", default=options.get("driver_id", self.config_entry.data.get("driver_id", "standard_gatt"))): vol.In(sorted(SESSION_FACTORIES)),
+            vol.Optional("auth_key"): selector.TextSelector(selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)),
             vol.Required("poll_interval", default=options.get("poll_interval", 300)): vol.All(vol.Coerce(int), vol.Range(min=15, max=86400)),
             vol.Required("reconnect_interval", default=options.get("reconnect_interval", 30)): vol.All(vol.Coerce(int), vol.Range(min=5, max=3600)),
             vol.Required("record_history", default=options.get("record_history", True)): bool,
-        }))
+        }), errors=errors)
+
+
+def valid_key(data):
+    if data.get("driver_id") != "huami_legacy":
+        return True
+    try:
+        parse_key(data.get("auth_key", ""))
+    except ValueError:
+        return False
+    return True
