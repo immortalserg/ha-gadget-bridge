@@ -17,3 +17,5 @@ jobs:
       - run: python -m unittest discover -s tests -p 'test_huami_auth.py'
 
       - run: python -m unittest discover -s tests -p 'test_huami_activity.py'
+
+      - run: python -m unittest discover -s tests -p 'test_huami_battery.py'
