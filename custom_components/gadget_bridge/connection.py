@@ -9,6 +9,7 @@ from homeassistant.components import bluetooth
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 
 from .drivers.gatt import HEART_RATE_MEASUREMENT, BATTERY_LEVEL, decode_heart_rate, decode_battery
+from .drivers.weight import WEIGHT_MEASUREMENT, decode_weight
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,6 +33,15 @@ class GattSession:
         except ValueError:
             _LOGGER.debug("Invalid heart rate notification")
 
+    def weight_indication(self, sender, data):
+        try:
+            reading = decode_weight(bytes(data))
+            # HA sensor provides a consistent kg state for measurements.
+            kilograms = reading.weight * 0.45359237 if reading.unit == "lb" else reading.weight
+            self.publish("weight", round(kilograms, 3))
+        except ValueError:
+            _LOGGER.debug("Invalid weight indication")
+
     async def run(self):
         while True:
             client = None
@@ -47,12 +57,15 @@ class GattSession:
                 )
                 heart = client.services.get_characteristic(HEART_RATE_MEASUREMENT)
                 battery = client.services.get_characteristic(BATTERY_LEVEL)
-                if heart is None and battery is None:
+                weight = client.services.get_characteristic(WEIGHT_MEASUREMENT)
+                if heart is None and battery is None and weight is None:
                     raise ValueError("No supported standard GATT characteristics")
                 self.connected = True
                 async_dispatcher_send(self.hass, self.signal)
                 if heart is not None:
                     await client.start_notify(heart, self.heart_notification)
+                if weight is not None:
+                    await client.start_notify(weight, self.weight_indication)
                 while client.is_connected and not disconnected.is_set():
                     if battery is not None:
                         try:
