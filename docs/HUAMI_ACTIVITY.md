@@ -1,3 +1,3 @@
-# Experimental activity decoder
+# Legacy realtime steps
 
-The candidate legacy realtime activity characteristic is 00000007-0000-3512-2118-0009af100700. The experimental decoder assumes one leading byte and three unsigned little-endian 32-bit fields (steps, distance in metres, calories). This layout is a hypothesis pending verification against pinned Gadgetbridge source and device captures; the synthetic tests verify only the assumed layout. Do not enable this decoder in a runtime session until verified. Other packet lengths are rejected. Battery and historical activity formats require separate verification.
+Reference: Gadgetbridge GitHub master, app/src/main/java/nodomain/freeyourgadget/gadgetbridge/service/devices/huami/HuamiSupport.java, handleRealtimeSteps(byte[]). The implementation accepts exactly 13 bytes and decodes bytes 1 and 2 as unsigned little-endian steps. Remaining bytes are not decoded by this method. The previous speculative three-field layout was removed. The GitHub mirror is historical; current Codeberg revision and hardware validation remain outstanding.
