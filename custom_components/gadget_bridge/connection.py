@@ -17,7 +17,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class GattSession:
-    def __init__(self, hass, address, entry_id, store=None):
+    def __init__(self, hass, address, entry_id, store=None, poll_interval=300, reconnect_interval=30):
         self.hass = hass
         self.address = address
         self.signal = f"gadget_bridge_{entry_id}"
@@ -25,6 +25,8 @@ class GattSession:
         self.connected = False
         self.task = None
         self.store = store
+        self.poll_interval = poll_interval
+        self.reconnect_interval = reconnect_interval
         self.entry_id = entry_id
         self.pending = []
         self.writer = None
@@ -45,9 +47,9 @@ class GattSession:
             units = {"heart_rate": "bpm", "battery": "%", "weight": "kg"}
             if kind in units:
                 if len(self.pending) >= 4096:
-                    self.pending.pop(0)
-                    _LOGGER.warning("Gadget history buffer full; oldest sample dropped")
-                self.pending.append(Measurement(Capability(kind), datetime.now(timezone.utc), value, units[kind], self.entry_id))
+                    _LOGGER.warning("Gadget history buffer full; newest sample dropped")
+                else:
+                    self.pending.append(Measurement(Capability(kind), datetime.now(timezone.utc), value, units[kind], self.entry_id))
                 if self.writer is None or self.writer.done():
                     self.writer = self.hass.async_create_task(self.flush_history())
         async_dispatcher_send(self.hass, self.signal)
@@ -74,7 +76,7 @@ class GattSession:
             try:
                 device = bluetooth.async_ble_device_from_address(self.hass, self.address, connectable=True)
                 if device is None:
-                    await asyncio.sleep(30)
+                    await asyncio.sleep(self.reconnect_interval)
                     continue
                 client = await establish_connection(
                     BleakClient, device, self.address,
@@ -98,7 +100,7 @@ class GattSession:
                         except Exception:
                             _LOGGER.debug("Battery read failed", exc_info=True)
                     try:
-                        await asyncio.wait_for(disconnected.wait(), timeout=300)
+                        await asyncio.wait_for(disconnected.wait(), timeout=self.poll_interval)
                     except TimeoutError:
                         pass
             except asyncio.CancelledError:
@@ -112,7 +114,7 @@ class GattSession:
                 if client is not None:
                     with suppress(Exception):
                         await client.disconnect()
-            await asyncio.sleep(30)
+            await asyncio.sleep(self.reconnect_interval)
 
     async def stop(self):
         if self.task is not None:
