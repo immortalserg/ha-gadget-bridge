@@ -8,11 +8,17 @@ from .const import DOMAIN
 
 async def async_setup_entry(hass, entry, async_add_entities):
     session = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([
+    entities = [
         GadgetSensor(entry, session, "heart_rate", "Heart rate", "bpm", None),
         GadgetSensor(entry, session, "battery", "Battery", PERCENTAGE, SensorDeviceClass.BATTERY),
         GadgetSensor(entry, session, "weight", "Weight", "kg", SensorDeviceClass.WEIGHT),
-    ])
+    ]
+    if session.supports_steps:
+        steps = GadgetSensor(entry, session, "steps", "Steps", "steps", None)
+        steps._attr_state_class = None
+        steps._attr_icon = "mdi:walk"
+        entities.append(steps)
+    async_add_entities(entities)
 
 
 class GadgetSensor(SensorEntity):
