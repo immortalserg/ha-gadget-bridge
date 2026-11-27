@@ -17,6 +17,8 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class GattSession:
+    supports_steps = False
+
     def __init__(self, hass, address, entry_id, store=None, poll_interval=300, reconnect_interval=30):
         self.hass = hass
         self.address = address
@@ -46,7 +48,7 @@ class GattSession:
     def publish(self, kind, value):
         self.values[kind] = value
         if self.store is not None:
-            units = {"heart_rate": "bpm", "battery": "%", "weight": "kg"}
+            units = {"heart_rate": "bpm", "battery": "%", "weight": "kg", "steps": "steps"}
             if kind in units:
                 if len(self.pending) >= 4096:
                     _LOGGER.warning("Gadget history buffer full; newest sample dropped")
@@ -90,6 +92,12 @@ class GattSession:
     async def prepare_client(self, client):
         """Optional driver-specific handshake before reading services."""
 
+    async def setup_extra(self, client):
+        return False
+
+    async def poll_extra(self, client):
+        pass
+
     async def run(self):
         while True:
             client = None
@@ -107,7 +115,8 @@ class GattSession:
                 heart = client.services.get_characteristic(HEART_RATE_MEASUREMENT)
                 battery = client.services.get_characteristic(BATTERY_LEVEL)
                 weight = client.services.get_characteristic(WEIGHT_MEASUREMENT)
-                if heart is None and battery is None and weight is None:
+                extra = await self.setup_extra(client)
+                if heart is None and battery is None and weight is None and not extra:
                     raise ValueError("No supported standard GATT characteristics")
                 self.connected = True
                 async_dispatcher_send(self.hass, self.signal)
@@ -122,6 +131,7 @@ class GattSession:
                             self.publish("battery", decode_battery(bytes(await client.read_gatt_char(battery))))
                         except Exception:
                             _LOGGER.debug("Battery read failed", exc_info=True)
+                    await self.poll_extra(client)
                     await self.wait_update(disconnected)
             except asyncio.CancelledError:
                 raise
