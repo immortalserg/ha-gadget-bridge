@@ -48,8 +48,8 @@ class GattSession:
     def publish(self, kind, value):
         self.values[kind] = value
         if self.store is not None:
-            units = {"heart_rate": "bpm", "battery": "%", "weight": "kg", "steps": "steps"}
-            if kind in units:
+            units = {"heart_rate": "bpm", "battery": "%", "weight": "kg", "steps": "steps", "last_charge_level": "%"}
+            if kind in units and value is not None:
                 if len(self.pending) >= 4096:
                     _LOGGER.warning("Gadget history buffer full; newest sample dropped")
                 else:
