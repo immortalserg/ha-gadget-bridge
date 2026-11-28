@@ -7,7 +7,9 @@
         "description": "Enter the address of a device with standard GATT heart rate or battery service.",
         "data": {
           "name": "Device name",
-          "address": "BLE MAC address"
+          "address": "BLE MAC address",
+          "driver_id": "Device driver",
+          "auth_key": "Authentication key (32 hex characters)"
         }
       },
       "confirm": {
@@ -16,11 +18,29 @@
       }
     },
     "error": {
-      "invalid_address": "Enter a valid BLE MAC address."
+      "invalid_address": "Enter a valid BLE MAC address.",
+      "invalid_auth_key": "Invalid authentication key"
     },
     "abort": {
       "already_configured": "This device is already configured.",
       "unsupported_device": "Standard heart rate service not advertised."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Device settings",
+        "data": {
+          "poll_interval": "Battery polling interval (s)",
+          "reconnect_interval": "Reconnect interval (s)",
+          "record_history": "Record measurement history",
+          "driver_id": "Device driver",
+          "auth_key": "Authentication key (32 hex characters)"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth_key": "Invalid authentication key"
     }
   }
 }

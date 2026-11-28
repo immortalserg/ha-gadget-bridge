@@ -8,11 +8,19 @@ from .const import DOMAIN
 
 async def async_setup_entry(hass, entry, async_add_entities):
     session = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([
+    entities = [
         GadgetSensor(entry, session, "heart_rate", "Heart rate", "bpm", None),
         GadgetSensor(entry, session, "battery", "Battery", PERCENTAGE, SensorDeviceClass.BATTERY),
         GadgetSensor(entry, session, "weight", "Weight", "kg", SensorDeviceClass.WEIGHT),
-    ])
+    ]
+    if session.supports_steps:
+        steps = GadgetSensor(entry, session, "steps", "Steps", "steps", None)
+        steps._attr_state_class = None
+        steps._attr_icon = "mdi:walk"
+        entities.append(steps)
+    if getattr(session, "supports_charging", False):
+        entities.append(GadgetSensor(entry, session, "last_charge_level", "Last charge level", PERCENTAGE, SensorDeviceClass.BATTERY))
+    async_add_entities(entities)
 
 
 class GadgetSensor(SensorEntity):
@@ -34,7 +42,7 @@ class GadgetSensor(SensorEntity):
 
     @property
     def available(self):
-        return self.session.connected and self.kind in self.session.values
+        return self.session.connected and self.session.values.get(self.kind) is not None
 
     @property
     def native_value(self):
