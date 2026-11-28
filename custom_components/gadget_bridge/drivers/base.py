@@ -14,6 +14,7 @@ class Capability(StrEnum):
     WEIGHT = "weight"
     BLOOD_PRESSURE = "blood_pressure"
     BATTERY = "battery"
+    LAST_CHARGE_LEVEL = "last_charge_level"
 
 
 @dataclass(frozen=True)
