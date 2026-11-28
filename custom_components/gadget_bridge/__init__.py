@@ -13,13 +13,13 @@ async def async_setup_entry(hass, entry):
         raise ConfigEntryError(f"Unsupported Gadget Bridge driver: {driver_id}")
     session = create_session(driver_id, hass, entry.data[CONF_ADDRESS], entry.entry_id, store, auth_key=entry.options.get("auth_key", entry.data.get("auth_key", "")), poll_interval=entry.options.get("poll_interval", 300), reconnect_interval=entry.options.get("reconnect_interval", 30))
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = session
-    await hass.config_entries.async_forward_entry_setups(entry, ("sensor", "button"))
+    await hass.config_entries.async_forward_entry_setups(entry, ("sensor", "button", "binary_sensor"))
     session.task = entry.async_create_background_task(hass, session.run(), "gadget_bridge_gatt")
     return True
 
 
 async def async_unload_entry(hass, entry):
-    if not await hass.config_entries.async_unload_platforms(entry, ("sensor", "button")):
+    if not await hass.config_entries.async_unload_platforms(entry, ("sensor", "button", "binary_sensor")):
         return False
     session = hass.data[DOMAIN].pop(entry.entry_id)
     await session.stop()
